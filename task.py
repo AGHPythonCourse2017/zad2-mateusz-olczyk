@@ -8,3 +8,6 @@ class Task:
 
     def task_invoke(self):
         pass
+
+    def task_finalize(self):
+        pass

@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
+# def inverse(function):
+#     def inverted(self, t):
+#         function()
+#     return inverted
+
+
 def approximate(base_function, mapping_xy):
     a = sum(map(lambda x: base_function(x)**2, mapping_xy))
     b = sum(map(lambda x: mapping_xy[x] * base_function(x), mapping_xy))
@@ -28,6 +34,7 @@ def get_samples(task_class, num=100):
         task = task_class(int(n))
         task.task_init()
         mapping_nt[n] = time_measure(task.task_invoke)
+        task.task_finalize()
     return mapping_nt
 
 
@@ -56,12 +63,26 @@ class Estimation:
 
     def __init__(self, task_class):
         self.mapping_ntime = get_samples(task_class)
-        self.complexity, self.get_time = self.best_approximation()
+        self.complexity, self.get_time_for_n = self.best_approximation()
+
+    def get_n_for_time(self, t):
+        left = 0
+        right = 1
+        precision = 5
+        while self.get_time_for_n(right) < t:
+            right *= 2
+        while right - left > precision:
+            middle = (left+right)/2
+            if self.get_time_for_n(middle) > t:
+                right = middle
+            else:
+                left = middle
+        return (left+right)/2
 
     def show_plot(self):
         x = list(self.mapping_ntime.keys())
         y_real = list(self.mapping_ntime.values())
-        y_est = list(map(self.get_time, x))
+        y_est = list(map(self.get_time_for_n, x))
         plt.plot(x, y_real, 'b')
         plt.plot(x, y_est, 'r')
         plt.show()
