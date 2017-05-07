@@ -5,10 +5,21 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
-# def inverse(function):
-#     def inverted(self, t):
-#         function()
-#     return inverted
+# Decorator
+def binary_inverse(fun):
+    def inverted(self, t):
+        left = 0
+        right = 1
+        while fun(self, right) < t:
+            right *= 2
+        while right - left > 1:
+            middle = (left+right)/2
+            if fun(self, middle) > t:
+                right = middle
+            else:
+                left = middle
+        return (left+right)/2
+    return inverted
 
 
 def approximate(base_function, mapping_xy):
@@ -65,19 +76,9 @@ class Estimation:
         self.mapping_ntime = get_samples(task_class)
         self.complexity, self.get_time_for_n = self.best_approximation()
 
+    @binary_inverse
     def get_n_for_time(self, t):
-        left = 0
-        right = 1
-        precision = 5
-        while self.get_time_for_n(right) < t:
-            right *= 2
-        while right - left > precision:
-            middle = (left+right)/2
-            if self.get_time_for_n(middle) > t:
-                right = middle
-            else:
-                left = middle
-        return (left+right)/2
+        return self.get_time_for_n(t)
 
     def show_plot(self):
         x = list(self.mapping_ntime.keys())
