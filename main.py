@@ -1,8 +1,7 @@
-from random import random
-from numpy import linspace
-from approx import approx
+from estimation import Estimation
+from task_sort import TaskSort
 
-mapping = {}
-for x in linspace(0, 5, 51):
-    mapping[x] = -2*x*x+.5*x+1+random()
-print(approx([lambda x: x*x, lambda x: x, lambda _: 1], mapping))
+
+est = Estimation(TaskSort)
+print(est.coefficients)
+est.show_plot()
