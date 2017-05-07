@@ -1,20 +1,18 @@
 from math import log2
 from time import time
-from numpy import empty, zeros, logspace
-from numpy.linalg import solve
-from itertools import product
+from numpy import logspace
 import matplotlib.pyplot as plt
+from operator import itemgetter
 
 
-def approximate(base_functions, mapping_xy):
-    l = len(base_functions)
-    a = empty((l, l))
-    b = zeros(l)
-    for i, j in product(range(l), repeat=2):
-        a[i, j] = sum(map(lambda x: base_functions[i](x) * base_functions[j](x), mapping_xy))
-    for i in range(l):
-        b[i] = sum(map(lambda x: mapping_xy[x] * base_functions[i](x), mapping_xy))
-    return solve(a, b)
+def approximate(base_function, mapping_xy):
+    a = sum(map(lambda x: base_function(x)**2, mapping_xy))
+    b = sum(map(lambda x: mapping_xy[x] * base_function(x), mapping_xy))
+    return lambda x: b/a * base_function(x)
+
+
+def approximation_cost(approx_function, mapping_xy):
+    return sum(map(lambda x: (mapping_xy[x]-approx_function(x))**2, mapping_xy))
 
 
 def time_measure(fun):
@@ -24,9 +22,9 @@ def time_measure(fun):
     return end - start
 
 
-def get_samples(task_class):
+def get_samples(task_class, num=100):
     mapping_nt = {}
-    for n in logspace(2, 6.6, num=100):
+    for n in logspace(2, 6, num):
         task = task_class(int(n))
         task.task_init()
         mapping_nt[n] = time_measure(task.task_invoke)
@@ -35,29 +33,34 @@ def get_samples(task_class):
 
 class Estimation:
 
-    functions = {
+    complexities = {
         "O(1)": lambda _: 1,
         "O(n)": lambda x: x,
         "O(n^2)": lambda x: x**2,
         "O(n^3)": lambda x: x**3,
-        "O(log n)": lambda x: log2(x),
+        "O(log n)": log2,
         "O(n log n)": lambda x: x*log2(x),
     }
-    base_functions = list(functions.values())
+
+    def best_approximation(self):
+        approximations = []
+        for complexity in self.complexities:
+            approx_function = approximate(self.complexities[complexity], self.mapping_ntime)
+            approximations.append((
+                complexity,
+                approx_function,
+                approximation_cost(approx_function, self.mapping_ntime)
+            ))
+        best_complexity = min(approximations, key=itemgetter(2))
+        return best_complexity[:2]
 
     def __init__(self, task_class):
-        self.mapping_nt = get_samples(task_class)
-        self.coefficients = approximate(Estimation.base_functions, self.mapping_nt)
-
-    def get_time(self, n):
-        s = 0
-        for i, f in enumerate(Estimation.functions.values()):
-            s += self.coefficients[i] * f(n)
-        return s
+        self.mapping_ntime = get_samples(task_class)
+        self.complexity, self.get_time = self.best_approximation()
 
     def show_plot(self):
-        x = list(self.mapping_nt.keys())
-        y_real = list(self.mapping_nt.values())
+        x = list(self.mapping_ntime.keys())
+        y_real = list(self.mapping_ntime.values())
         y_est = list(map(self.get_time, x))
         plt.plot(x, y_real, 'b')
         plt.plot(x, y_est, 'r')

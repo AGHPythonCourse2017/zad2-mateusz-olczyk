@@ -1,7 +1,7 @@
-from estimation import Estimation
+from estimation import Estimation, approximation_cost
 from task_sort import TaskSort
 
 
 est = Estimation(TaskSort)
-print(est.coefficients)
+print(est.complexity)
 est.show_plot()
