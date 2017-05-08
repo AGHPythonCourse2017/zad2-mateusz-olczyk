@@ -4,6 +4,6 @@ import logging
 
 
 logging.basicConfig(level=logging.INFO)
-est = Estimation(TaskSort, 50)
+est = Estimation(TaskSort, 100)
 print(est.complexity)
 est.show_plot()
