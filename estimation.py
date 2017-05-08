@@ -3,6 +3,7 @@ from time import time
 from numpy import logspace
 import matplotlib.pyplot as plt
 from operator import itemgetter
+import logging
 
 
 # Exception
@@ -57,6 +58,8 @@ def get_samples(task_class, num):
         task.task_init()
         mapping_nt[n] = time_measure(task.task_invoke)
         task.task_finalize()
+    # Logger 1
+    logging.info("Total time = %f", sum(mapping_nt.values()))
     return mapping_nt
 
 
@@ -75,17 +78,20 @@ class Estimation:
         approximations = []
         for complexity in self.complexities:
             approx_function = approximate(self.complexities[complexity], self.mapping_ntime)
+            cost = approximation_cost(approx_function, self.mapping_ntime)
+            # Logger 2
+            logging.info("Cost for %s = %f", complexity, cost)
             approximations.append((
                 complexity,
                 approx_function,
-                approximation_cost(approx_function, self.mapping_ntime)
+                cost
             ))
         best_complexity = min(approximations, key=itemgetter(2))
         return best_complexity[:2]
 
     def __init__(self, task_class, samples=50):
-        if samples < 1:
-            raise MinValueException("samples", 1)
+        if samples < 2:
+            raise MinValueException("samples", 2)
         self.mapping_ntime = get_samples(task_class, samples)
         self.complexity, self.get_time_for_n = self.best_approximation()
 

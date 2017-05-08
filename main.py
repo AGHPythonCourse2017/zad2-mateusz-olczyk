@@ -1,8 +1,9 @@
 from estimation import Estimation
 from task_sort import TaskSort
+import logging
 
 
-est = Estimation(TaskSort)
+logging.basicConfig(level=logging.INFO)
+est = Estimation(TaskSort, 50)
 print(est.complexity)
-print(est.get_n_for_time(0.2))
 est.show_plot()
