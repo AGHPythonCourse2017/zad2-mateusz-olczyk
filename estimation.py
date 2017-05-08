@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
+# Exception
+class MinValueException(Exception):
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __str__(self):
+        return "Value of %s must be at least %d!" % (self.name, self.value)
+
+
 # Decorator
 def binary_inverse(fun):
     def inverted(self, t):
@@ -39,9 +50,9 @@ def time_measure(fun):
     return end - start
 
 
-def get_samples(task_class, num=100):
+def get_samples(task_class, num):
     mapping_nt = {}
-    for n in logspace(2, 6, num):
+    for n in logspace(1, 6, num):
         task = task_class(int(n))
         task.task_init()
         mapping_nt[n] = time_measure(task.task_invoke)
@@ -72,8 +83,10 @@ class Estimation:
         best_complexity = min(approximations, key=itemgetter(2))
         return best_complexity[:2]
 
-    def __init__(self, task_class):
-        self.mapping_ntime = get_samples(task_class)
+    def __init__(self, task_class, samples=50):
+        if samples < 1:
+            raise MinValueException("samples", 1)
+        self.mapping_ntime = get_samples(task_class, samples)
         self.complexity, self.get_time_for_n = self.best_approximation()
 
     @binary_inverse
@@ -84,6 +97,6 @@ class Estimation:
         x = list(self.mapping_ntime.keys())
         y_real = list(self.mapping_ntime.values())
         y_est = list(map(self.get_time_for_n, x))
-        plt.plot(x, y_real, 'b')
+        plt.plot(x, y_real, '.b')
         plt.plot(x, y_est, 'r')
         plt.show()
